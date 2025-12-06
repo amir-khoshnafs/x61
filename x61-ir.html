@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>x61 | Neural Event Horizon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700;800&display=swap');
+
+        /* FIXED: Added #root to height: 100% to ensure full screen layout */
+        body, html, #root {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Custom Scrollbar hide */
+        ::-webkit-scrollbar { display: none; }
+
+        /* Glitch Animation for the Title */
+        .glitch-wrapper {
+            position: relative;
+        }
+
+        .glitch {
+            position: relative;
+            color: #fff;
+            font-size: 8rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            z-index: 10;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 #00ffff;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 #ff00ff;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.85deg); }
+            5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.85deg); }
+            10% { clip: rect(29px, 9999px, 83px, 0); transform: skew(0.06deg); }
+            15% { clip: rect(13px, 9999px, 91px, 0); transform: skew(0.2deg); }
+            20% { clip: rect(2px, 9999px, 23px, 0); transform: skew(0.79deg); }
+            25% { clip: rect(31px, 9999px, 66px, 0); transform: skew(0.26deg); }
+            30% { clip: rect(76px, 9999px, 7px, 0); transform: skew(0.27deg); }
+            35% { clip: rect(37px, 9999px, 12px, 0); transform: skew(0.67deg); }
+            40% { clip: rect(44px, 9999px, 55px, 0); transform: skew(0.38deg); }
+            45% { clip: rect(56px, 9999px, 7px, 0); transform: skew(0.25deg); }
+            50% { clip: rect(12px, 9999px, 6px, 0); transform: skew(0.2deg); }
+            55% { clip: rect(58px, 9999px, 90px, 0); transform: skew(0.12deg); }
+            60% { clip: rect(31px, 9999px, 6px, 0); transform: skew(0.96deg); }
+            65% { clip: rect(69px, 9999px, 29px, 0); transform: skew(0.69deg); }
+            70% { clip: rect(36px, 9999px, 23px, 0); transform: skew(0.32deg); }
+            75% { clip: rect(77px, 9999px, 9px, 0); transform: skew(0.32deg); }
+            80% { clip: rect(96px, 9999px, 16px, 0); transform: skew(0.53deg); }
+            85% { clip: rect(34px, 9999px, 49px, 0); transform: skew(0.3deg); }
+            90% { clip: rect(39px, 9999px, 10px, 0); transform: skew(0.48deg); }
+            95% { clip: rect(51px, 9999px, 61px, 0); transform: skew(0.28deg); }
+            100% { clip: rect(24px, 9999px, 98px, 0); transform: skew(0.64deg); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 99px, 0); transform: skew(0.2deg); }
+            100% { clip: rect(18px, 9999px, 71px, 0); transform: skew(0.8deg); }
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.6;
+        }
+
+        /* Fade In Animation */
+        .fade-in {
+            animation: fadeIn 2s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+
+    <!-- Import Maps for React and Three.js -->
+    <!-- Fixing the version mismatch by forcing deps to use the same three.js version -->
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "three": "https://esm.sh/three@0.149.0",
+                "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.13.0?deps=three@0.149.0,react@18.2.0",
+                "@react-three/drei": "https://esm.sh/@react-three/drei@9.70.0?deps=three@0.149.0,react@18.2.0,@react-three/fiber@8.13.0",
+                "maath/random/dist/maath-random.esm": "https://esm.sh/maath@0.10.7/random/dist/maath-random.esm?deps=react@18.2.0"
+            }
+        }
+    </script>
+    <script type="module" src="https://esm.sh/run"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useRef, useMemo, useEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import * as THREE from 'three';
+        import { Canvas, useFrame, useThree } from '@react-three/fiber';
+        import { Points, PointMaterial, Stars, Float } from '@react-three/drei';
+        import * as random from 'maath/random/dist/maath-random.esm';
+
+        // --- COMPONENTS ---
+
+        // 1. The Neural Field (Accretion Disk)
+        function NeuralField(props) {
+            const ref = useRef();
+            const [sphere] = useState(() => {
+                // Generate points in a flattened sphere/disk shape
+                const Float32Array = window.Float32Array;
+                // Generate 5000 points
+                const pts = new Float32Array(5000 * 3);
+                const colors = new Float32Array(5000 * 3);
+
+                for(let i=0; i<5000; i++) {
+                    const i3 = i * 3;
+                    // Create a spiral galaxy distribution
+                    const radius = Math.random() * 1.5 + 0.5; // Inner hole
+                    const spinAngle = radius * 5;
+                    const angle = (Math.random() * Math.PI * 2) + spinAngle;
+
+                    // Flattened disk with some vertical spread (gaussian)
+                    const x = Math.cos(angle) * radius * 3; // Stretch X
+                    const z = Math.sin(angle) * radius * 3; // Stretch Z
+                    const y = (Math.random() - 0.5) * (0.2 + (0.5 - radius*0.1)); // Thickness varies
+
+                    pts[i3] = x;
+                    pts[i3+1] = y;
+                    pts[i3+2] = z;
+
+                    // Colors: Mix of Cyan, Purple, and Deep Blue
+                    // Based on radius
+                    const mix = Math.random();
+                    if (radius < 1.0) { // Core - Hot/Bright
+                        colors[i3] = 0.5; colors[i3+1] = 0.8; colors[i3+2] = 1.0;
+                    } else if (mix > 0.5) { // Outer - Purple/Pink
+                         colors[i3] = 0.8; colors[i3+1] = 0.1; colors[i3+2] = 0.8;
+                    } else { // Outer - Cyan
+                         colors[i3] = 0.1; colors[i3+1] = 0.8; colors[i3+2] = 0.9;
+                    }
+                }
+                return { positions: pts, colors: colors };
+            });
+
+            useFrame((state, delta) => {
+                // Rotate the entire galaxy slowly
+                ref.current.rotation.x -= delta / 50;
+                ref.current.rotation.y -= delta / 35;
+
+                // Breathing effect (pulsing)
+                const t = state.clock.getElapsedTime();
+                const scale = 1 + Math.sin(t * 0.5) * 0.05;
+                ref.current.scale.set(scale, scale, scale);
+            });
+
+            return (
+                <group rotation={[0, 0, Math.PI / 4]}>
+                    <Points ref={ref} positions={sphere.positions} colors={sphere.colors} stride={3} frustumCulled={false} {...props}>
+                        <PointMaterial
+                            transparent
+                            vertexColors
+                            size={0.025}
+                            sizeAttenuation={true}
+                            depthWrite={false}
+                            blending={THREE.AdditiveBlending}
+                        />
+                    </Points>
+                </group>
+            )
+        }
+
+        // 2. Camera Rig - Tracks Mouse for Parallax
+        function CameraRig() {
+            const { camera, mouse } = useThree();
+            const vec = new THREE.Vector3();
+
+            useFrame(() => {
+                // Smoothly interpolate camera position based on mouse coordinates
+                // Creates the "tracking" effect
+                camera.position.lerp(vec.set(mouse.x * 2, mouse.y * 1, camera.position.z), 0.05);
+                camera.lookAt(0, 0, 0);
+            });
+            return null;
+        }
+
+        // 3. Floating Latent Data (Background noise)
+        function LatentData() {
+            const ref = useRef();
+             useFrame((state, delta) => {
+                ref.current.rotation.x -= delta / 10;
+                ref.current.rotation.y -= delta / 15;
+            });
+
+            // Random points in a larger sphere for background depth
+            const sphere = random.inSphere(new Float32Array(2000), { radius: 6 });
+
+            return (
+                <group rotation={[0, 0, Math.PI / 4]}>
+                    <Points ref={ref} positions={sphere} stride={3} frustumCulled={false}>
+                        <PointMaterial
+                            transparent
+                            color="#333"
+                            size={0.015}
+                            sizeAttenuation={true}
+                            depthWrite={false}
+                        />
+                    </Points>
+                </group>
+            )
+        }
+
+        // --- UI OVERLAY ---
+
+        function UI() {
+            const [time, setTime] = useState(new Date().toLocaleTimeString());
+            const [confidence, setConfidence] = useState("99.8%");
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setTime(new Date().toLocaleTimeString());
+                    // Randomize confidence slightly to look like active inference
+                    setConfidence((98 + Math.random() * 2).toFixed(1) + "%");
+                }, 1000);
+                return () => clearInterval(interval);
+            }, []);
+
+            return (
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-8 z-40 select-none">
+                    {/* Top Header */}
+                    <div className="flex justify-between items-start fade-in">
+                        <div className="text-xs md:text-sm tracking-widest opacity-70">
+                            <div className="font-bold text-cyan-400">SYS.STATUS: ONLINE</div>
+                            <div className="mt-1">LATENT SPACE RENDERER</div>
+                            <div className="mt-1 text-gray-400">v.0.9.1-beta</div>
+                        </div>
+                        <div className="text-right text-xs md:text-sm tracking-widest opacity-70">
+                            <div className="font-bold text-purple-400">INFERENCE ENGINE</div>
+                            <div className="mt-1">CONFIDENCE: {confidence}</div>
+                            <div className="mt-1 font-mono text-gray-500">RES_NET_50::ACTIVE</div>
+                        </div>
+                    </div>
+
+                    {/* Center Title */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center mix-blend-screen w-full">
+                        <div className="glitch-wrapper">
+                            <h1 className="glitch leading-none tracking-tighter" data-text="x61">x61</h1>
+                        </div>
+                        <p className="mt-4 text-cyan-100 tracking-[0.5em] text-xs md:text-sm font-light uppercase opacity-80 fade-in" style={{animationDelay: "0.5s"}}>
+                            Artifial Intelligence
+                        </p>
+                        <p className="mt-2 text-purple-200 tracking-[0.2em] text-[10px] uppercase opacity-60 fade-in" style={{animationDelay: "1s"}}>
+                            Machine Perception / Deep Vision
+                        </p>
+                    </div>
+
+                    {/* Bottom Footer */}
+                    <div className="flex justify-between items-end fade-in">
+                        <div className="text-xs tracking-widest opacity-50 font-mono">
+                            <div>LOC: 34.0522° N, 118.2437° W</div>
+                            <div className="mt-1">TIME: {time}</div>
+                        </div>
+
+                        <div className="text-xs tracking-widest opacity-70 text-right">
+                             <a href="mailto:contact@x61.com" className="pointer-events-auto hover:text-cyan-400 transition-colors duration-300 block">
+                                [ INIT_CONTACT ]
+                            </a>
+                            <div className="mt-1 opacity-40">© 2024 x61.ir</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- MAIN APP ---
+
+        function App() {
+            return (
+                <div className="w-full h-full bg-black relative">
+                    <div className="scanlines"></div>
+
+                    {/* The 3D Scene */}
+                    <Canvas camera={{ position: [0, 0, 4.5], fov: 60 }}>
+                        <color attach="background" args={['#050505']} />
+
+                        {/* Lighting - Though points don't react much to light, it helps scene depth */}
+                        <ambientLight intensity={0.5} />
+
+                        {/* The Galactic Brain */}
+                        <NeuralField />
+
+                        {/* Background dust */}
+                        <LatentData />
+                        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+
+                        {/* Interaction Rig */}
+                        <CameraRig />
+
+                        {/* Post Processing Effects (Simulated via simple fog) */}
+                        <fog attach="fog" args={['#050505', 5, 15]} />
+                    </Canvas>
+
+                    {/* The HTML UI */}
+                    <UI />
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
